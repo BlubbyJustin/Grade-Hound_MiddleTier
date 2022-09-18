@@ -1,5 +1,6 @@
 import collections
 import datetime
+from importlib.machinery import FrozenImporter
 import json
 import logging
 import os
@@ -142,6 +143,37 @@ def deleteClass():
             conn.execute(f"DELETE FROM classes WHERE class_id = {classId};")
         with db.connect() as conn:
             conn.execute("COMMIT")
+    return ''
+
+@app.route('/deleteUser', methods = ['POST'])
+def deleteUser():
+    if(request.method == 'POST'):
+        request_data = json.loads(request.data.decode('utf-8'))
+        userId = request_data['userId']
+        with db.connect() as conn:
+            cursor = conn.execute(f"SELECT class_id FROM classes WHERE user_id = '{userId}';")
+        classData = cursor.fetchall()
+        if(len(classData) == 0):
+            with db.connect() as conn:
+                conn.execute(f"DELETE FROM users WHERE user_id = '{userId}';")
+        else: #this no work what the fuck
+            for cid in classData:
+                with db.connect() as conn:
+                    conn.execute(f"DELETE FROM types WHERE class_id = {cid[0]};")
+                with db.connect() as conn:
+                    conn.execute("COMMIT")
+                with db.connect() as conn:
+                    conn.execute(f"DELETE FROM assignments WHERE class_id = {cid[0]};")
+                with db.connect() as conn:
+                    conn.execute("COMMIT")
+                with db.connect() as conn:
+                    conn.execute(f"DELETE FROM classes WHERE class_id = {cid[0]};")
+                with db.connect() as conn:
+                    conn.execute("COMMIT")
+            with db.connect() as conn:
+                conn.execute(f"DELETE FROM users WHERE user_id = '{userId}';")
+            with db.connect() as conn:
+                    conn.execute("COMMIT")
     return ''
 
 @app.route('/fetchAssignmentData', methods = ['GET', 'POST'])
